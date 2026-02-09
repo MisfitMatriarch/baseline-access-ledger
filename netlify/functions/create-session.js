@@ -20,7 +20,14 @@ export async function handler(event) {
   }
 
   try {
-    const { clientName, clientEmail, practitionerName, practitionerEmail, practiceName } = JSON.parse(event.body);
+    const { 
+      clientName, 
+      clientEmail, 
+      practitionerName, 
+      practitionerEmail, 
+      practiceName,
+      selfUseMode 
+    } = JSON.parse(event.body);
 
     if (!clientName || !clientEmail || !practitionerName || !practitionerEmail) {
       return { 
@@ -32,6 +39,11 @@ export async function handler(event) {
     const clientToken = generateToken();
     const practitionerToken = generateToken();
 
+    // results_email is where the practitioner/reviewer copy goes
+    // In self-use mode, this is the user's own email
+    // In standard mode, this is the practitioner's email
+    const resultsEmail = practitionerEmail;
+
     // Create session in database
     const { data, error } = await supabase
       .from('assessment_sessions')
@@ -42,6 +54,7 @@ export async function handler(event) {
         client_email: clientEmail,
         practitioner_name: practitionerName,
         practitioner_email: practitionerEmail,
+        results_email: resultsEmail,
         practice_name: practiceName || 'Neurodivergent Empowered',
         status: 'pending_client'
       })

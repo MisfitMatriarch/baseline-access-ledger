@@ -21,6 +21,14 @@ export async function handler(event) {
       };
     }
 
+    // Strict role validation - reject anything other than explicit values
+    if (role !== 'client' && role !== 'practitioner') {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid role. Must be "client" or "practitioner"' })
+      };
+    }
+
     const tokenField = role === 'client' ? 'client_token' : 'practitioner_token';
     
     const { data, error } = await supabase
@@ -56,11 +64,15 @@ export async function handler(event) {
 
     if (role === 'practitioner') {
       responseData.clientEmail = data.client_email;
+      responseData.resultsEmail = data.results_email || data.practitioner_email;
       responseData.clientResponses = data.client_responses;
       responseData.clientCompletedAt = data.client_completed_at;
       responseData.practitionerNotes = data.practitioner_notes;
       responseData.summaryOutput = data.summary_output;
       responseData.capacityBand = data.capacity_band;
+      responseData.insufficientData = data.insufficient_data || false;
+      responseData.nullCount = data.null_count;
+      responseData.totalKeyQuestions = data.total_key_questions;
     }
 
     return {
